@@ -1,0 +1,30 @@
+package faang.school.hashtagservice.dto.post;
+
+import faang.school.hashtagservice.annotation.ValidHashtag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.List;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class PostDto implements Serializable {
+    private Long id;
+    private Long authorId;
+    private Long projectId;
+
+    @NotBlank
+    @Size(min = 1, max = 4000)
+    private String content;
+
+    @NotNull
+    private List<String> hashtagNames;
+}
