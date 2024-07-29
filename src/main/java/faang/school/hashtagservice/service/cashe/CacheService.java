@@ -6,6 +6,7 @@ import faang.school.hashtagservice.mapper.PostMapper;
 import faang.school.hashtagservice.model.hashtag.Hashtag;
 import faang.school.hashtagservice.model.post.Post;
 import faang.school.hashtagservice.repository.HashtagRepository;
+import faang.school.hashtagservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,18 +48,18 @@ public class CacheService {
     @Transactional
     public void initializeCache() {
         List<Hashtag> popularHashtags = hashtagRepository.findPopularHashtags(PageRequest.of(0, cacheSize));
-        for (Hashtag hashtag : popularHashtags) {
-            List<Post> posts = postRepository.findByHashtagsNameOrderByCreatedAtDesc(hashtag.getName());
+        popularHashtags.forEach(hashtag -> {
+            List<Post> posts = postRepository.findByHashtagNameOrderByCreatedAtDesc(hashtag.getName());
 
             List<Long> postIds = new ArrayList<>();
-            for (Post post : posts) {
+            posts.forEach(post -> {
                 PostDto postDto = postMapper.toDto(post);
                 cachePost(postDto);
                 postIds.add(post.getId());
-            }
+            });
 
             cachePostsByHashtag(hashtag.getName(), postIds);
-        }
+        });
     }
     public void clearCache() {
         log.info("Clearing all keys from Redis");
