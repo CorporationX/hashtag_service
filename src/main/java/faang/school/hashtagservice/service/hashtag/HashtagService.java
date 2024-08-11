@@ -4,12 +4,9 @@ import faang.school.hashtagservice.client.PostServiceClient;
 import faang.school.hashtagservice.dto.post.PostDto;
 import faang.school.hashtagservice.model.hashtag.Hashtag;
 import faang.school.hashtagservice.repository.HashtagRepository;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,23 +59,8 @@ public class HashtagService {
         if (cachedPostIds != null) {
             List<PostDto> postDtos = new ArrayList<>();
 
-            for (Long postId : cachedPostIds) {
-                PostDto cachedPost = (PostDto) redisTemplate.opsForValue().get("post:" + postId);
-                if (cachedPost != null) {
-                    postDtos.add(cachedPost);
-                } else {
-                    postDtos.add(getPostById(postId));
-                }
-            }
             return postDtos;
         }
         return new ArrayList<>();
-    }
-
-    @Retryable(retryFor = FeignException.class, maxAttempts = 3, backoff = @Backoff(delay = 3000))
-    private PostDto getPostById(Long postId) {
-        PostDto postDto = postServiceClient.getPostById(postId);
-        log.info(String.format("PostDto with ID %d was successfully received", postId));
-        return postDto;
     }
 }
