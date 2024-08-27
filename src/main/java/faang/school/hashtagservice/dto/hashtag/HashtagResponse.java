@@ -1,6 +1,6 @@
-package faang.school.hashtagservice.model.hashtag;
+package faang.school.hashtagservice.dto.hashtag;
 
-import jakarta.validation.constraints.NotEmpty;
+import faang.school.hashtagservice.model.Hashtag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class HashtagRequest {
-    @NotEmpty
-    private List<String> hashtagNames;
+public class HashtagResponse {
+    List<Hashtag> hashtags;
 }

@@ -1,4 +1,4 @@
-package faang.school.hashtagservice.model.hashtag;
+package faang.school.hashtagservice.dto.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +11,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class HashtagResponse {
-    List<Hashtag> hashtags;
+public class PostResponse {
+    private List<PostDto> posts;
 }

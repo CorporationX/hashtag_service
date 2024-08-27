@@ -1,12 +1,10 @@
 package faang.school.hashtagservice.service.cashe;
 
 
+import faang.school.hashtagservice.client.PostServiceClient;
 import faang.school.hashtagservice.dto.post.PostDto;
-import faang.school.hashtagservice.mapper.PostMapper;
-import faang.school.hashtagservice.model.hashtag.Hashtag;
-import faang.school.hashtagservice.model.post.Post;
+import faang.school.hashtagservice.model.Hashtag;
 import faang.school.hashtagservice.repository.HashtagRepository;
-import faang.school.hashtagservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,42 +23,50 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class CacheService {
     private final RedisTemplate<String, Serializable> redisTemplate;
-    private final PostRepository postRepository;
-    private final PostMapper postMapper;
+    private final PostServiceClient postServiceClient;
     private final HashtagRepository hashtagRepository;
 
     @Value("${spring.data.redis.cache.expiration:3600}")
     private long cacheExpiration;
 
-    @Value("${spring.data.cache.size}")
-    private int cacheSize;
+    @Value("${spring.data.cache.size.hashtag}")
+    private int cacheHashtagSize;
+
+    @Value("${spring.data.cache.size.post}")
+    private int cachePostSize;
+
+    @Value("${spring.data.cache.hashtag-cache-key}")
+    private String hashtagCacheKey;
+
+    @Value("${spring.data.cache.post-cache-key}")
+    private String postCacheKey;
 
     public void cachePostsByHashtag(String hashtag, List<Long> postIds) {
-        redisTemplate.opsForValue().set("hashtag:" + hashtag, (Serializable) postIds, cacheExpiration,
+        redisTemplate.opsForValue().set(hashtagCacheKey + ":" + hashtag, (Serializable) postIds, cacheExpiration,
                 TimeUnit.SECONDS);
     }
 
     public void cachePost(PostDto postDto) {
-        redisTemplate.opsForValue().set("post:" + postDto.getId(), postDto, cacheExpiration,
+        redisTemplate.opsForValue().set(postCacheKey + ":" + postDto.getId(), postDto, cacheExpiration,
                 TimeUnit.SECONDS);
     }
 
     @Transactional
     public void initializeCache() {
-        List<Hashtag> popularHashtags = hashtagRepository.findPopularHashtags(PageRequest.of(0, cacheSize));
+        List<Hashtag> popularHashtags = hashtagRepository.findPopularHashtags(PageRequest.of(0, cacheHashtagSize));
         popularHashtags.forEach(hashtag -> {
-            List<Post> posts = postRepository.findByHashtagNameOrderByCreatedAtDesc(hashtag.getName());
+            List<PostDto> posts = postServiceClient.findPostsByHashtag(hashtag.getName(), 0, cachePostSize);
 
             List<Long> postIds = new ArrayList<>();
             posts.forEach(post -> {
-                PostDto postDto = postMapper.toDto(post);
-                cachePost(postDto);
+                cachePost(post);
                 postIds.add(post.getId());
             });
 
             cachePostsByHashtag(hashtag.getName(), postIds);
         });
     }
+
     public void clearCache() {
         log.info("Clearing all keys from Redis");
         redisTemplate.getConnectionFactory().getConnection().flushDb();

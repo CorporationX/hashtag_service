@@ -28,10 +28,14 @@ spring:
       rest:
         uris: http://localhost:9200
     cache:
+      hashtag-cache-key: hashtag
+      post-cache-key: post
       expiration: 3600
       refresh:
         rate: 3600000
-      size: 1000
+      size:
+        hashtag: 500
+        post: 10
 
 server:
   port: 8083

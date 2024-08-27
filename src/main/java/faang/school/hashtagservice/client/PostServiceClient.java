@@ -11,6 +11,11 @@ import java.util.List;
 @FeignClient(name = "post-service", url = "${post-service.host}:${post-service.port}")
 public interface PostServiceClient {
 
-    @GetMapping("/post/hashtag")
-    List<PostDto> findPostsByHashtag(@RequestParam @ValidHashtag String hashtagName);
+    @GetMapping("/post/hashtag/cache")
+    List<PostDto> findPostsByHashtag(@RequestParam @ValidHashtag String hashtagName,
+                                     @RequestParam int page,
+                                     @RequestParam int size);
+
+    @GetMapping("/post/list/ids")
+    List<PostDto> getPostsByIds(@RequestParam List<Long> postIds);
 }

@@ -1,10 +1,10 @@
 package faang.school.hashtagservice.controller;
 
 import faang.school.hashtagservice.annotation.ValidHashtag;
-import faang.school.hashtagservice.model.hashtag.Hashtag;
-import faang.school.hashtagservice.model.hashtag.HashtagRequest;
-import faang.school.hashtagservice.model.hashtag.HashtagResponse;
-import faang.school.hashtagservice.model.post.PostResponse;
+import faang.school.hashtagservice.model.Hashtag;
+import faang.school.hashtagservice.dto.hashtag.HashtagRequest;
+import faang.school.hashtagservice.dto.hashtag.HashtagResponse;
+import faang.school.hashtagservice.dto.post.PostResponse;
 import faang.school.hashtagservice.service.hashtag.HashtagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class HashtagController {
         hashtagService.saveAllHashtags(request.getHashtagNames());
     }
 
-    @PostMapping("/allByNames")
+    @GetMapping("/allByNames")
     public HashtagResponse getHashtagsByNames(@RequestBody @ValidHashtag HashtagRequest request) {
         return HashtagResponse.builder()
                 .hashtags(hashtagService.getHashtagsByNames(request.getHashtagNames()))

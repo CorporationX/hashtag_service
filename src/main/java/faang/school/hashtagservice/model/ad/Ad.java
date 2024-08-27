@@ -1,6 +1,6 @@
 package faang.school.hashtagservice.model.ad;
 
-import faang.school.hashtagservice.model.post.Post;
+import faang.school.hashtagservice.model.Post;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Data;

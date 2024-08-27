@@ -1,11 +1,6 @@
-package faang.school.hashtagservice.model.post;
+package faang.school.hashtagservice.model;
 
-import faang.school.hashtagservice.model.Album;
-import faang.school.hashtagservice.model.Comment;
-import faang.school.hashtagservice.model.Like;
-import faang.school.hashtagservice.model.Resource;
 import faang.school.hashtagservice.model.ad.Ad;
-import faang.school.hashtagservice.model.hashtag.Hashtag;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,7 +42,7 @@ public class Post {
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
-            name = "post_hashtag",
+            name = "hashtag_post",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )

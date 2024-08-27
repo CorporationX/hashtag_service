@@ -24,7 +24,7 @@ public class CacheInitializer {
             log.info("Cache initialized successfully.");
         } catch (Exception e) {
             log.error("Error during cache initialization", e);
-            throw e;
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -40,6 +40,7 @@ public class CacheInitializer {
             log.info("Cache refreshed successfully.");
         } catch (Exception e) {
             log.error("Error during cache refresh", e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -51,6 +52,7 @@ public class CacheInitializer {
             log.info("Cache cleared successfully.");
         } catch (Exception e) {
             log.error("Error during cache clearing", e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

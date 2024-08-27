@@ -1,6 +1,6 @@
 package faang.school.hashtagservice.service;
 
-import faang.school.hashtagservice.model.hashtag.Hashtag;
+import faang.school.hashtagservice.model.Hashtag;
 import faang.school.hashtagservice.repository.HashtagRepository;
 import faang.school.hashtagservice.service.hashtag.HashtagService;
 import org.junit.jupiter.api.BeforeEach;

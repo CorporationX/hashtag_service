@@ -1,6 +1,6 @@
 package faang.school.hashtagservice.repository;
 
-import faang.school.hashtagservice.model.hashtag.Hashtag;
+import faang.school.hashtagservice.model.Hashtag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

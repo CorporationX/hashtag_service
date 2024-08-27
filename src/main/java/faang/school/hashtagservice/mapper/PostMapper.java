@@ -1,8 +1,8 @@
 package faang.school.hashtagservice.mapper;
 
 import faang.school.hashtagservice.dto.post.PostDto;
-import faang.school.hashtagservice.model.hashtag.Hashtag;
-import faang.school.hashtagservice.model.post.Post;
+import faang.school.hashtagservice.model.Hashtag;
+import faang.school.hashtagservice.model.Post;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
