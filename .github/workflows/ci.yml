@@ -19,13 +19,13 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: ./gradlew dependencies
+        run: chmod +x ./gradlew dependencies
 
       - name: Build project
-        run: ./gradlew build
+        run: chmod +x ./gradlew build
 
       - name: Run tests
-        run: ./gradlew test
+        run: chmod +x ./gradlew test
 
       - name: Lint code
-        run: ./gradlew check # или другой инструмент для проверки качества кода
+        run: chmod +x ./gradlew check
