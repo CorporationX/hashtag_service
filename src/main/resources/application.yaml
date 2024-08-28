@@ -24,9 +24,6 @@ spring:
       channels:
         calculations_channel:
           name: calculations_channel
-    elasticsearch:
-      rest:
-        uris: http://localhost:9200
     cache:
       hashtag-cache-key: hashtag
       post-cache-key: post
