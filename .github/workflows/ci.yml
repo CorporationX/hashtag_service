@@ -18,14 +18,17 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
       - name: Install dependencies
-        run: chmod +x ./gradlew dependencies
+        run: ./gradlew dependencies
 
       - name: Build project
-        run: chmod +x ./gradlew build
+        run: ./gradlew build --no-daemon
 
       - name: Run tests
-        run: chmod +x ./gradlew test
+        run: ./gradlew test
 
       - name: Lint code
-        run: chmod +x ./gradlew check
+        run: ./gradlew check
