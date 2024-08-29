@@ -26,7 +26,7 @@ public class HashtagController {
         hashtagService.saveAllHashtags(request.getHashtagNames());
     }
 
-    @GetMapping("/allByNames")
+    @PostMapping("/allByNames")
     public HashtagResponse getHashtagsByNames(@RequestBody @ValidHashtag HashtagRequest request) {
         return HashtagResponse.builder()
                 .hashtags(hashtagService.getHashtagsByNames(request.getHashtagNames()))
