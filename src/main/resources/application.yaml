@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: user
+    password: password
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      channels:
+        calculations_channel:
+          name: calculations_channel
+    cache:
+      hashtag-cache-key: hashtag
+      post-cache-key: post
+      expiration: 3600
+      refresh:
+        rate: 3600000
+      size:
+        hashtag: 500
+        post: 10
+
+server:
+  port: 8083
+
+logging:
+  level:
+    root: info
+
+post-service:
+  host: localhost
+  port: 8081
