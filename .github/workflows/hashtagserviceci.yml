@@ -19,7 +19,10 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
 
-      - name: Step 3 - Cache dependencies on Gradle
+      - name: Step 3 - Set gradlew executable
+        run: chmod +x gradlew
+
+      - name: Step 4 - Cache dependencies on Gradle
         uses: actions/cache@v3
         with:
           path: |
@@ -29,14 +32,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
-      - name: Step 4 - Build project with Gradle
+      - name: Step 5 - Build project with Gradle
         run: ./gradlew build
 
-      - name: Step 5 - Run tests with Gradle
+      - name: Step 6 - Run tests with Gradle
         run: ./gradlew test
 
-      - name: Step 6 - Generate Jacoco report
+      - name: Step 7 - Generate Jacoco report
         run: ./gradlew jacocoTestReport
 
-      - name: Step 7 - Verify code coverage
+      - name: Step 8 - Verify code coverage
         run: ./gradlew jacocoTestCoverageVerification
