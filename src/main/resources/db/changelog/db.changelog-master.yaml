@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changeset/hashtag_V001_initial.sql
+  - include:
+      file: db/changelog/changeset/hashtag_V002_insert_hashtag.sql

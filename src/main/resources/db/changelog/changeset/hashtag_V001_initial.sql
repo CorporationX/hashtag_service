@@ -1,0 +1,17 @@
+CREATE TABLE hashtags (
+    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY UNIQUE,
+    name varchar(100) UNIQUE NOT NULL,
+    created_at timestamptz DEFAULT current_timestamp
+);
+
+CREATE TABLE post_hashtags (
+    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY UNIQUE,
+    post_id bigint NOT NULL,
+    hashtag_id bigint NOT NULL,
+
+    CONSTRAINT fk_hashtag_id FOREIGN KEY (hashtag_id) REFERENCES hashtags (id)
+);
+
+CREATE INDEX idx_hashtags_name ON hashtags (name);
+CREATE INDEX idx_post_hashtags_hashtag_id ON post_hashtags (hashtag_id);
+CREATE INDEX idx_post_hashtags_post_id ON post_hashtags (post_id);

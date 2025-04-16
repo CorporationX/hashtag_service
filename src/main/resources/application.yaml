@@ -1,0 +1,59 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: user
+    password: password
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      channels:
+        base-channel: base-channel
+
+  profiles:
+    active: local
+
+server:
+  port: 8090
+
+logging:
+  level:
+    root: debug
+
+user-service:
+  host: localhost
+  port: 8080
+post-service:
+  host: localhost
+  port: 8081
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    doc-expansion: none
+  api-docs:
+    path: /v3/api-docs
+
+thread-pool:
+  start-pool:
+    size: 1
+    shutdown-timeout-seconds: 30
+
+cron:
+  every-day-task: 0 0 0 * * *
