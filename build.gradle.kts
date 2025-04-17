@@ -24,7 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.0.2")
-    implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.springframework.kafka:spring-kafka:3.0.6")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
@@ -34,7 +34,7 @@ dependencies {
      */
     implementation("org.liquibase:liquibase-core")
     implementation("redis.clients:jedis:4.3.2")
-    implementation("org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.10")
+    implementation("co.elastic.clients:elasticsearch-java:8.6.2")
     runtimeOnly("org.postgresql:postgresql")
 
     /**
@@ -71,7 +71,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    implementation("org.springframework.kafka:spring-kafka-test:3.0.6")
 }
 
 tasks.withType<Test> {
