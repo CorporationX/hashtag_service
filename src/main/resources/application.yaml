@@ -26,6 +26,17 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: hashtag-group
+      auto-offset-reset: earliest
+    producer:
+      acks: "1"
+    topics:
+      hashtag:
+        name: "hashtag-topic"
+        partitions: 3
+        replicas: 1
+
 
   elasticsearch:
     uris: http://localhost:9200
