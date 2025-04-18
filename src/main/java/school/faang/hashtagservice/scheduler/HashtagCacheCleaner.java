@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import school.faang.hashtagservice.service.HashtagService;
+import school.faang.hashtagservice.service.HashtagCacheService;
 
 import java.time.LocalDateTime;
 
@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
 @Slf4j
 public class HashtagCacheCleaner {
 
-    private final HashtagService hashtagService;
+    private final HashtagCacheService hashtagCacheService;
 
     @Scheduled(cron = "${cron.hashtag-cache-clean}")
-    public void cleanHashtagsCache() {
-        log.debug("Cleaning hashtags cache start on {}", LocalDateTime.now());
+    public void clearHashtagsCache() {
+        log.debug("Clearing hashtags cache start on {}", LocalDateTime.now());
+        hashtagCacheService.clearHashtagsCache();
+        log.debug("Clearing hashtags cache end on {}", LocalDateTime.now());
     }
 }

@@ -12,7 +12,6 @@ import school.faang.hashtagservice.dto.HashtagResponseDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.dto.event.HashtagEvent;
 import school.faang.hashtagservice.filter.HashtagFilter;
-import school.faang.hashtagservice.listener.EventListener;
 import school.faang.hashtagservice.mapper.HashtagMapper;
 import school.faang.hashtagservice.repository.HashtagRepository;
 
@@ -29,7 +28,6 @@ public class HashtagService {
     private final UserContext userContext;
     private final HashtagMapper hashtagMapper;
     private final List<HashtagFilter> filters;
-    private final List<EventListener> listeners;
 
     public void addHashtags(HashtagStringsDto hashtagDto) {
 
@@ -61,11 +59,6 @@ public class HashtagService {
 
     @Async("unusedHashtagCleaner")
     public void clearUnusedHashtags() {
-
-    }
-
-    @Async("hashtagCacheCleaner")
-    public void clearHashtagsCache() {
 
     }
 }

@@ -16,7 +16,9 @@ public class HashtagUnusedCleaner {
     private final HashtagService hashtagService;
 
     @Scheduled(cron = "${cron.unused-hashtag-clean}")
-    public void cleanUnusedHashtags() {
-        log.debug("Cleaning unused hashtags start on {}", LocalDateTime.now());
+    public void clearUnusedHashtags() {
+        log.debug("Clearing unused hashtags start on {}", LocalDateTime.now());
+        hashtagService.clearUnusedHashtags();
+        log.debug("Clearing unused hashtags end on {}", LocalDateTime.now());
     }
 }

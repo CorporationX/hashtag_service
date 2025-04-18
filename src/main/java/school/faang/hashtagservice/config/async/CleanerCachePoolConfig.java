@@ -14,7 +14,7 @@ public class CleanerCachePoolConfig {
     @Value("${thread-pool.cleaner-cache-pool.shutdown-timeout-seconds}")
     private int shutdownTimeoutSeconds;
 
-    @Bean(name = "hashtagCacheCleaner")
+    @Bean(name = "hashtagCacheExecutor")
     public ThreadPoolTaskExecutor createHashtagCacheCleanerExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(poolSize);
