@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,7 +19,10 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Builder
-@Table(name = "post_hashtags")
+@Table(name = "post_hashtags", indexes = {
+        @Index(name = "idx_post_hashtags_hashtag_id", columnList = "hashtag_id"),
+        @Index(name = "idx_post_hashtags_post_id", columnList = "post_id")
+})
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostHashtag {

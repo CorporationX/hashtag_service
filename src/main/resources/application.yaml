@@ -37,7 +37,6 @@ spring:
         partitions: 3
         replicas: 1
 
-
   elasticsearch:
     uris: http://localhost:9200
     username: elastic
@@ -56,6 +55,7 @@ logging:
 user-service:
   host: localhost
   port: 8080
+
 post-service:
   host: localhost
   port: 8081
@@ -70,9 +70,13 @@ springdoc:
     path: /v3/api-docs
 
 thread-pool:
-  start-pool:
+  cleaner-cache-pool:
+    size: 1
+    shutdown-timeout-seconds: 30
+  cleaner-hashtag-pool:
     size: 1
     shutdown-timeout-seconds: 30
 
 cron:
-  every-day-task: 0 0 0 * * *
+  hashtag-cache-clean: 0 0 * * * *
+  unused-hashtag-clean: 0 0 0 * * *

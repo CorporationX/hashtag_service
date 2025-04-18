@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
@@ -23,7 +24,7 @@ import java.util.List;
 @Data
 @Entity
 @Builder
-@Table(name = "hashtags")
+@Table(name = "hashtags", indexes = @Index(name = "idx_hashtags_name", columnList = "name"))
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Hashtag {
