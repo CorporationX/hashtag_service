@@ -20,7 +20,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(NOT_FOUND).body(getErrorResponse(e));
     }
 
-    @ExceptionHandler()
+    @ExceptionHandler({
+            JsonDeserializationException.class
+    })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusBadRequest(Exception e) {
         return ResponseEntity.status(BAD_REQUEST).body(getErrorResponse(e));
     }

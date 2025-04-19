@@ -10,12 +10,13 @@ import school.faang.hashtagservice.config.context.UserContext;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.dto.HashtagResponseDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
-import school.faang.hashtagservice.dto.event.HashtagEvent;
+import school.faang.hashtagservice.dto.event.HashtagAddingEvent;
 import school.faang.hashtagservice.filter.HashtagFilter;
 import school.faang.hashtagservice.mapper.HashtagMapper;
 import school.faang.hashtagservice.repository.HashtagRepository;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -45,15 +46,15 @@ public class HashtagService {
         return null;
     }
 
-    public List<Long> getHashtagsIdsByPostIds(List<Long> postIds) {
+    public Map<Long, List<Long>> getHashtagsIdsByPostIds(List<Long> postIds) {
         return null;
     }
 
-    public void linkHashtagOnPost(HashtagEvent event) {
+    public void linkHashtagOnPost(HashtagAddingEvent event) {
 
     }
 
-    public void unlinkHashtagOnPost(HashtagEvent event) {
+    public void unlinkHashtagOnPost(Long postId) {
 
     }
 

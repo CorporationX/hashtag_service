@@ -6,14 +6,14 @@ import org.springframework.context.annotation.Configuration;
 
 @Getter
 @Configuration
-public class HashtagTopicProperties {
+public class HashtagAddingTopicProperties {
 
-    @Value("${spring.kafka.topics.hashtag.name}")
+    @Value("${spring.kafka.topics.hashtag-adding.name}")
     private String name;
 
-    @Value("${spring.kafka.topics.hashtag.partitions}")
+    @Value("${spring.kafka.topics.hashtag-adding.partitions}")
     private int partitions;
 
-    @Value("${spring.kafka.topics.hashtag.replicas}")
+    @Value("${spring.kafka.topics.hashtag-adding.replicas}")
     private int replicas;
 }

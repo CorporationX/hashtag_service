@@ -32,8 +32,12 @@ spring:
     producer:
       acks: "1"
     topics:
-      hashtag:
-        name: "hashtag-topic"
+      hashtag-adding:
+        name: "hashtag-adding-topic"
+        partitions: 3
+        replicas: 1
+      hashtag-removing:
+        name: "hashtag-removing-topic"
         partitions: 3
         replicas: 1
 

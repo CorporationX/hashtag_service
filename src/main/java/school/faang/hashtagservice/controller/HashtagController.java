@@ -16,6 +16,7 @@ import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.service.HashtagService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ public class HashtagController {
     }
 
     @GetMapping("/posts")
-    public List<Long> getHashtagsIdsByPostIds(@RequestParam List<Long> postIds) {
+    public Map<Long, List<Long>> getHashtagsIdsByPostIds(@RequestParam List<Long> postIds) {
         return hashtagService.getHashtagsIdsByPostIds(postIds);
     }
 }

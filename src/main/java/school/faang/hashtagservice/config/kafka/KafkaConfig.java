@@ -15,9 +15,8 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import school.faang.hashtagservice.config.properties.HashtagTopicProperties;
+import school.faang.hashtagservice.config.properties.HashtagAddingTopicProperties;
+import school.faang.hashtagservice.config.properties.HashtagRemovingTopicProperties;
 import school.faang.hashtagservice.config.properties.KafkaProperties;
 
 import java.util.HashMap;
@@ -28,7 +27,8 @@ import java.util.Map;
 public class KafkaConfig {
 
     private final KafkaProperties kafkaProperties;
-    private final HashtagTopicProperties hashtagTopic;
+    private final HashtagAddingTopicProperties hashtagAddingTopic;
+    private final HashtagRemovingTopicProperties hashtagRemovingTopic;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
@@ -36,7 +36,7 @@ public class KafkaConfig {
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
         config.put(ProducerConfig.ACKS_CONFIG, kafkaProperties.getAcks());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
@@ -52,7 +52,7 @@ public class KafkaConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getGroupId());
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.getAutoOffsetReset());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
@@ -65,10 +65,19 @@ public class KafkaConfig {
     }
 
     @Bean
-    public NewTopic hashtagTopic() {
-        return TopicBuilder.name(hashtagTopic.getName())
-                .partitions(hashtagTopic.getPartitions())
-                .replicas(hashtagTopic.getReplicas())
+    public NewTopic hashtagAddingTopic() {
+        return TopicBuilder.name(hashtagAddingTopic.getName())
+                .partitions(hashtagAddingTopic.getPartitions())
+                .replicas(hashtagAddingTopic.getReplicas())
+                .compact()
+                .build();
+    }
+
+    @Bean
+    public NewTopic hashtagRemovingTopic() {
+        return TopicBuilder.name(hashtagRemovingTopic.getName())
+                .partitions(hashtagRemovingTopic.getPartitions())
+                .replicas(hashtagRemovingTopic.getReplicas())
                 .compact()
                 .build();
     }
