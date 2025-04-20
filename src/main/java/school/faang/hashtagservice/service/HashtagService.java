@@ -158,6 +158,7 @@ public class HashtagService {
         return Hashtag.builder()
                 .name(name)
                 .postsWithHashtag(new ArrayList<>())
+                .userId(userContext.getUserId())
                 .build();
     }
 

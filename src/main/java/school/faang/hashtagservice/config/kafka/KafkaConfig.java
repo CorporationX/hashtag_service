@@ -1,7 +1,6 @@
 package school.faang.hashtagservice.config.kafka;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -9,14 +8,11 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import school.faang.hashtagservice.config.properties.HashtagAddingTopicProperties;
-import school.faang.hashtagservice.config.properties.HashtagRemovingTopicProperties;
 import school.faang.hashtagservice.config.properties.KafkaProperties;
 
 import java.util.HashMap;
@@ -27,8 +23,6 @@ import java.util.Map;
 public class KafkaConfig {
 
     private final KafkaProperties kafkaProperties;
-    private final HashtagAddingTopicProperties hashtagAddingTopic;
-    private final HashtagRemovingTopicProperties hashtagRemovingTopic;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
@@ -62,23 +56,5 @@ public class KafkaConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
-    }
-
-    @Bean
-    public NewTopic hashtagAddingTopic() {
-        return TopicBuilder.name(hashtagAddingTopic.getName())
-                .partitions(hashtagAddingTopic.getPartitions())
-                .replicas(hashtagAddingTopic.getReplicas())
-                .compact()
-                .build();
-    }
-
-    @Bean
-    public NewTopic hashtagRemovingTopic() {
-        return TopicBuilder.name(hashtagRemovingTopic.getName())
-                .partitions(hashtagRemovingTopic.getPartitions())
-                .replicas(hashtagRemovingTopic.getReplicas())
-                .compact()
-                .build();
     }
 }

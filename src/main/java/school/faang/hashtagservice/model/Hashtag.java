@@ -43,4 +43,7 @@ public class Hashtag {
 
     @OneToMany(mappedBy = "hashtag", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostHashtag> postsWithHashtag;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 }

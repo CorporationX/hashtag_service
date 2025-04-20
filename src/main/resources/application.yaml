@@ -40,6 +40,19 @@ spring:
         name: "hashtag-removing-topic"
         partitions: 3
         replicas: 1
+      hashtag-analytics:
+        name: "hashtag-analytics"
+        partitions: 3
+        replicas: 1
+      hashtag-notification:
+        name: "hashtag-notification"
+        partitions: 3
+        replicas: 1
+      hashtag-achievement:
+        name: "hashtag-achievement"
+        partitions: 3
+        replicas: 1
+
 
   elasticsearch:
     uris: http://localhost:9200
