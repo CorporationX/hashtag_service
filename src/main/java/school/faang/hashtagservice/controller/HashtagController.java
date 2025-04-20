@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.dto.HashtagResponseDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
+import school.faang.hashtagservice.dto.client.PostResponseDto;
 import school.faang.hashtagservice.service.HashtagService;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class HashtagController {
         return ResponseEntity.ok().body("Hashtags added successfully");
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public List<HashtagResponseDto> getHashtagsByIds(@RequestParam List<Long> hashtagIds) {
         return hashtagService.getHashtagsByIds(hashtagIds);
     }
@@ -46,8 +47,13 @@ public class HashtagController {
         return hashtagService.getHashtagsIdsByPostId(postId);
     }
 
-    @GetMapping("/posts")
+    @GetMapping
     public Map<Long, List<Long>> getHashtagsIdsByPostIds(@RequestParam List<Long> postIds) {
         return hashtagService.getHashtagsIdsByPostIds(postIds);
+    }
+
+    @GetMapping("/posts")
+    public List<PostResponseDto> getPostsByHashtagIds(@RequestParam List<Long> hashtagIds) {
+        return hashtagService.getPostsByHashtagIds(hashtagIds);
     }
 }

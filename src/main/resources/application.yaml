@@ -84,3 +84,6 @@ thread-pool:
 cron:
   hashtag-cache-clean: 0 0 * * * *
   unused-hashtag-clean: 0 0 0 * * *
+
+cleaner-config:
+  days: 7

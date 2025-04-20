@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import school.faang.hashtagservice.dto.error.ErrorResponse;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestControllerAdvice
@@ -14,7 +15,8 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({
-            HashtagNotFoundException.class
+            HashtagNotFoundException.class,
+            UserNotFoundException.class,
     })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusNotFound(Exception e) {
         return ResponseEntity.status(NOT_FOUND).body(getErrorResponse(e));
@@ -25,6 +27,14 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusBadRequest(Exception e) {
         return ResponseEntity.status(BAD_REQUEST).body(getErrorResponse(e));
+    }
+
+    @ExceptionHandler({
+            UserServiceConnectionException.class,
+            PostServiceConnectionException.class
+    })
+    public ResponseEntity<ErrorResponse> handleExceptionWithStatusInternalServerError(Exception e) {
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(getErrorResponse(e));
     }
 
     private ErrorResponse getErrorResponse(Exception e) {

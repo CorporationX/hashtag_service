@@ -10,11 +10,16 @@ public class HashtagKeywordFilter implements HashtagFilter {
 
     @Override
     public boolean isApplicable(HashtagFilterDto filter) {
-        return true;
+        return filter.keyword() != null && !filter.keyword().isBlank();
     }
 
     @Override
     public Specification<Hashtag> apply(HashtagFilterDto filter) {
-        return null;
+        String pattern = "%" + filter.keyword().toLowerCase()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_") + "%";
+        return (root, query, builder) ->
+                builder.like(builder.lower(root.get("name")), pattern, '\\');
     }
 }

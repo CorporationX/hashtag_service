@@ -10,11 +10,12 @@ public class HashtagFromDateFilter implements HashtagFilter {
 
     @Override
     public boolean isApplicable(HashtagFilterDto filter) {
-        return true;
+        return filter.fromDate() != null;
     }
 
     @Override
     public Specification<Hashtag> apply(HashtagFilterDto filter) {
-        return null;
+        return (root, query, builder) ->
+                builder.greaterThanOrEqualTo(root.get("createdAt"), filter.fromDate());
     }
 }
