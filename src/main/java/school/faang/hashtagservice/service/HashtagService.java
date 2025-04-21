@@ -17,6 +17,8 @@ import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.dto.client.PostResponseDto;
 import school.faang.hashtagservice.dto.client.UserDto;
 import school.faang.hashtagservice.dto.event.HashtagAddingEvent;
+import school.faang.hashtagservice.dto.event.HashtagRemovingEvent;
+import school.faang.hashtagservice.dto.event.HashtagRequestEvent;
 import school.faang.hashtagservice.exception.PostServiceConnectionException;
 import school.faang.hashtagservice.exception.UserNotFoundException;
 import school.faang.hashtagservice.exception.UserServiceConnectionException;
@@ -24,6 +26,8 @@ import school.faang.hashtagservice.filter.HashtagFilter;
 import school.faang.hashtagservice.mapper.HashtagMapper;
 import school.faang.hashtagservice.model.Hashtag;
 import school.faang.hashtagservice.model.PostHashtag;
+import school.faang.hashtagservice.publisher.HashtagRemovingEventPublisher;
+import school.faang.hashtagservice.publisher.HashtagRequestEventPublisher;
 import school.faang.hashtagservice.repository.HashtagRepository;
 
 import java.time.LocalDateTime;
@@ -44,6 +48,8 @@ public class HashtagService {
     private final UserContext userContext;
     private final HashtagMapper hashtagMapper;
     private final List<HashtagFilter> filters;
+    private final HashtagRequestEventPublisher hashtagRequestPublisher;
+    private final HashtagRemovingEventPublisher hashtagRemovingPublisher;
 
     @Value("${cleaner-config.days}")
     private int days;
@@ -53,11 +59,14 @@ public class HashtagService {
         hashtagDto.hashtagNames().stream()
                 .map(this::createHashtag)
                 .filter(hashtag -> isHashtagNotExists(hashtag.getName()))
-                .forEach(hashtagRepository::save);
+                .forEach(hashtag -> {
+                    hashtagRepository.save(hashtag);
+                    log.info("Hashtag {} added to database", hashtag.getName());
+                });
     }
 
     public List<HashtagResponseDto> getHashtagsByIds(List<Long> hashtagIds) {
-        return hashtagMapper.toDtoList(hashtagRepository.findAllByIdIn(hashtagIds));
+        return hashtagMapper.toDtoList(publishEventOnRequestListener(hashtagRepository.findAllByIdIn(hashtagIds)));
     }
 
     public List<HashtagResponseDto> getHashtagsByFilters(HashtagFilterDto filter) {
@@ -67,8 +76,9 @@ public class HashtagService {
                 .reduce(Specification::and)
                 .orElse(null);
 
-        List<Hashtag> hashtags = specifications != null ? hashtagRepository.findAll(specifications)
-                : hashtagRepository.findAll();
+        List<Hashtag> hashtags = specifications != null
+                ? publishEventOnRequestListener(hashtagRepository.findAll(specifications))
+                : publishEventOnRequestListener(hashtagRepository.findAll());
 
         return hashtagMapper.toDtoList(hashtags.stream()
                 .sorted(Comparator.comparing(Hashtag::getCreatedAt).reversed())
@@ -99,6 +109,7 @@ public class HashtagService {
         posts.add(createPostHashtag(event.postId(), hashtag));
         hashtag.setPostsWithHashtag(posts);
         hashtagRepository.save(hashtag);
+        log.info("Hashtag {} linked to post with id {}", hashtag.getName(), event.postId());
     }
 
     public void unlinkHashtagOnPost(Long postId) {
@@ -109,11 +120,14 @@ public class HashtagService {
                     posts.removeIf(post -> post.getPostId().equals(postId));
                     hashtag.setPostsWithHashtag(posts);
                 })
-                .forEach(hashtagRepository::save);
+                .forEach(hashtag -> {
+                    hashtagRepository.save(hashtag);
+                    log.info("Hashtag {} unlink to post with id {}", hashtag.getName(), postId);
+                });
     }
 
     public List<PostResponseDto> getPostsByHashtagIds(List<Long> hashtagIds) {
-        List<Hashtag> hashtags = hashtagRepository.findAllByIdIn(hashtagIds);
+        List<Hashtag> hashtags = publishEventOnRequestListener(hashtagRepository.findAllByIdIn(hashtagIds));
         List<Long> postIds = hashtags.stream()
                 .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
                         .map(PostHashtag::getPostId))
@@ -126,8 +140,12 @@ public class HashtagService {
     public void clearUnusedHashtags() {
         LocalDateTime dateTime = LocalDateTime.now().minusDays(days);
         List<Hashtag> hashtags = hashtagRepository.findAllByPostsWithHashtagEmptyAndCreatedAtBefore(dateTime);
-        hashtags.removeIf(hashtag -> hashtag.getPostsWithHashtag().isEmpty());
+        hashtags.removeIf(hashtag -> !hashtag.getPostsWithHashtag().isEmpty());
         hashtagRepository.deleteAll(hashtags);
+        hashtags.forEach(hashtag -> {
+            hashtagRemovingPublisher.publish(createHashtagRemovingEvent(hashtag.getUserId(), hashtag.getName()));
+            log.debug("Hashtag {} removing on database and send to notification listener", hashtag.getName());
+        });
     }
 
     private void checkUserExists() {
@@ -154,6 +172,15 @@ public class HashtagService {
         return !hashtagRepository.existsByName(hashtagName);
     }
 
+    private List<Hashtag> publishEventOnRequestListener(List<Hashtag> hashtags) {
+        return hashtags.stream()
+                .peek(hashtag -> {
+                    hashtagRequestPublisher.publish(createHashtagRequestEvent(hashtag.getUserId(), hashtag.getId()));
+                    log.debug("Hashtag {} published on listener", hashtag.getName());
+                })
+                .toList();
+    }
+
     private Hashtag createHashtag(String name) {
         return Hashtag.builder()
                 .name(name)
@@ -166,6 +193,22 @@ public class HashtagService {
         return PostHashtag.builder()
                 .postId(postId)
                 .hashtag(hashtag)
+                .build();
+    }
+
+    private HashtagRequestEvent createHashtagRequestEvent(Long userId, Long hashtagId) {
+        return HashtagRequestEvent.builder()
+                .userId(userId)
+                .hashtagId(hashtagId)
+                .receivedAt(LocalDateTime.now())
+                .build();
+    }
+
+    private HashtagRemovingEvent createHashtagRemovingEvent(Long userId, String hashtagName) {
+        return HashtagRemovingEvent.builder()
+                .userId(userId)
+                .hashtagName(hashtagName)
+                .removedAt(LocalDateTime.now())
                 .build();
     }
 }

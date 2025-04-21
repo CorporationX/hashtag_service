@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Builder
 public record HashtagResponseDto(
         String name,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long userId
 ) {
 }

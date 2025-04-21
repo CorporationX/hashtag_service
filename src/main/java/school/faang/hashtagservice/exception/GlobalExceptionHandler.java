@@ -23,7 +23,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({
-            JsonDeserializationException.class
+            JsonDeserializationException.class,
+            JsonSerializationException.class,
     })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusBadRequest(Exception e) {
         return ResponseEntity.status(BAD_REQUEST).body(getErrorResponse(e));
