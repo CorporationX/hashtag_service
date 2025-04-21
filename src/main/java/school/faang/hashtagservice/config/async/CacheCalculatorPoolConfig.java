@@ -6,19 +6,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
-public class CleanerCachePoolConfig {
+public class CacheCalculatorPoolConfig {
 
-    @Value("${thread-pool.cleaner-cache-pool.size}")
+    @Value("${thread-pool.cache-calculator-pool.size}")
     private int poolSize;
 
-    @Value("${thread-pool.cleaner-cache-pool.shutdown-timeout-seconds}")
+    @Value("${thread-pool.cache-calculator-pool.shutdown-timeout-seconds}")
     private int shutdownTimeoutSeconds;
 
     @Bean(name = "hashtagCacheExecutor")
-    public ThreadPoolTaskExecutor createHashtagCacheCleanerExecutor() {
+    public ThreadPoolTaskExecutor createHashtagCacheRecalculateExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(poolSize);
-        executor.setThreadNamePrefix("CleanerHashtagCachePool-");
+        executor.setThreadNamePrefix("HashtagCacheRecalculatePool-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(shutdownTimeoutSeconds);
         executor.initialize();

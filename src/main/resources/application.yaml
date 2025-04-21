@@ -87,7 +87,7 @@ springdoc:
     path: /v3/api-docs
 
 thread-pool:
-  cleaner-cache-pool:
+  cache-calculator-pool:
     size: 1
     shutdown-timeout-seconds: 30
   cleaner-hashtag-pool:
@@ -95,8 +95,15 @@ thread-pool:
     shutdown-timeout-seconds: 30
 
 cron:
-  hashtag-cache-clean: 0 0 * * * *
+  hashtag-cache-recalculate: 0 */15 * * * *
   unused-hashtag-clean: 0 0 0 * * *
 
 cleaner-config:
   days: 7
+
+cache-config:
+  top-hashtags-minutes: 30
+  top-hashtags-key: "top_hashtags"
+  top-hashtags-limit: 5000
+  hashtag-filters-minutes: 10
+  hashtag-filters-key: "hashtag_filters"

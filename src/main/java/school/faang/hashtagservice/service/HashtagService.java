@@ -4,6 +4,7 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
@@ -50,6 +51,7 @@ public class HashtagService {
     private final List<HashtagFilter> filters;
     private final HashtagRequestEventPublisher hashtagRequestPublisher;
     private final HashtagRemovingEventPublisher hashtagRemovingPublisher;
+    private final HashtagCacheService cacheService;
 
     @Value("${cleaner-config.days}")
     private int days;
@@ -66,9 +68,23 @@ public class HashtagService {
     }
 
     public List<HashtagResponseDto> getHashtagsByIds(List<Long> hashtagIds) {
-        return hashtagMapper.toDtoList(publishEventOnRequestListener(hashtagRepository.findAllByIdIn(hashtagIds)));
+        List<Hashtag> cachedHashtags = findHashtagsOnCache(hashtagIds);
+
+        if (isHashtagListsSizeEquals(cachedHashtags, hashtagIds)) {
+            publishEventOnRequestListener(cachedHashtags);
+            return hashtagMapper.toDtoList(cachedHashtags);
+        }
+
+        List<Hashtag> hashtags = findMissingHashtags(hashtagIds, cachedHashtags);
+
+        return hashtagMapper.toDtoList(publishEventOnRequestListener(hashtags));
     }
 
+    @Cacheable(
+            value = "${cache-config.hashtag-filters-key}",
+            key = "#filter.toString()",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public List<HashtagResponseDto> getHashtagsByFilters(HashtagFilterDto filter) {
         Specification<Hashtag> specifications = filters.stream()
                 .filter(hashtagFilter -> hashtagFilter.isApplicable(filter))
@@ -127,12 +143,18 @@ public class HashtagService {
     }
 
     public List<PostResponseDto> getPostsByHashtagIds(List<Long> hashtagIds) {
-        List<Hashtag> hashtags = publishEventOnRequestListener(hashtagRepository.findAllByIdIn(hashtagIds));
-        List<Long> postIds = hashtags.stream()
-                .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
-                        .map(PostHashtag::getPostId))
-                .distinct()
-                .toList();
+        List<Hashtag> cachedHashtags = findHashtagsOnCache(hashtagIds);
+
+        if (isHashtagListsSizeEquals(cachedHashtags, hashtagIds)) {
+            publishEventOnRequestListener(cachedHashtags);
+            List<Long> postIds = findPostIdsByHashtags(cachedHashtags);
+
+            return getPostsOnPostClient(postIds);
+        }
+
+        List<Hashtag> hashtags = findMissingHashtags(hashtagIds, cachedHashtags);
+
+        List<Long> postIds = findPostIdsByHashtags(hashtags);
         return getPostsOnPostClient(postIds);
     }
 
@@ -210,5 +232,33 @@ public class HashtagService {
                 .hashtagName(hashtagName)
                 .removedAt(LocalDateTime.now())
                 .build();
+    }
+
+    private List<Hashtag> findHashtagsOnCache(List<Long> hashtagIds) {
+        return cacheService.getPopularHashtags().stream()
+                .filter(hashtag -> hashtagIds.contains(hashtag.getId()))
+                .toList();
+    }
+
+    private List<Hashtag> findMissingHashtags(List<Long> hashtagIds, List<Hashtag> cachedHashtags) {
+        List<Long> missingIds = hashtagIds.stream()
+                .filter(id -> cachedHashtags.stream().noneMatch(hashtag -> hashtag.getId().equals(id)))
+                .toList();
+        List<Hashtag> hashtagsOnDatabase = hashtagRepository.findAllByIdIn(missingIds);
+        List<Hashtag> hashtags = new ArrayList<>(cachedHashtags);
+        hashtags.addAll(hashtagsOnDatabase);
+        return publishEventOnRequestListener(hashtags);
+    }
+
+    private List<Long> findPostIdsByHashtags(List<Hashtag> hashtags) {
+        return hashtags.stream()
+                .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
+                        .map(PostHashtag::getPostId))
+                .distinct()
+                .toList();
+    }
+
+    private boolean isHashtagListsSizeEquals(List<Hashtag> cachedHashtags, List<Long> hashtagsIds) {
+        return cachedHashtags.size() == hashtagsIds.size();
     }
 }

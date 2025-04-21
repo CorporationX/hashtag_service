@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class HashtagCacheCleaner {
+public class HashtagCacheCalculator {
 
     private final HashtagCacheService hashtagCacheService;
 
-    @Scheduled(cron = "${cron.hashtag-cache-clean}")
+    @Scheduled(cron = "${cron.hashtag-cache-recalculate}")
     public void clearHashtagsCache() {
         log.debug("Clearing hashtags cache start on {}", LocalDateTime.now());
-        hashtagCacheService.clearHashtagsCache();
+        hashtagCacheService.recalculateHashtagsCache();
         log.debug("Clearing hashtags cache end on {}", LocalDateTime.now());
     }
 }
