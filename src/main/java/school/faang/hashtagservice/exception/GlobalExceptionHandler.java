@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             HashtagNotFoundException.class,
             UserNotFoundException.class,
+            PostNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusNotFound(Exception e) {
         return ResponseEntity.status(NOT_FOUND).body(getErrorResponse(e));
@@ -32,7 +33,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
             UserServiceConnectionException.class,
-            PostServiceConnectionException.class
+            PostServiceConnectionException.class,
+            ElasticsearchConnectionException.class
     })
     public ResponseEntity<ErrorResponse> handleExceptionWithStatusInternalServerError(Exception e) {
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(getErrorResponse(e));

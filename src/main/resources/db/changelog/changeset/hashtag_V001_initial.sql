@@ -1,6 +1,7 @@
 CREATE TABLE hashtags (
     id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY UNIQUE,
-    name varchar(100) UNIQUE NOT NULL,
+    name varchar(128) UNIQUE NOT NULL,
+    user_id bigint NOT NULL default 0,
     created_at timestamptz DEFAULT current_timestamp
 );
 

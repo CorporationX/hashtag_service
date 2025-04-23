@@ -1,12 +1,19 @@
 package school.faang.hashtagservice.filter;
 
-import org.springframework.data.jpa.domain.Specification;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.model.Hashtag;
+import school.faang.hashtagservice.repository.ElasticsearchHashtagRepository;
+
+import java.io.IOException;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class HashtagKeywordFilter implements HashtagFilter {
+
+    private final ElasticsearchHashtagRepository elasticRepository;
 
     @Override
     public boolean isApplicable(HashtagFilterDto filter) {
@@ -14,12 +21,7 @@ public class HashtagKeywordFilter implements HashtagFilter {
     }
 
     @Override
-    public Specification<Hashtag> apply(HashtagFilterDto filter) {
-        String pattern = "%" + filter.keyword().toLowerCase()
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_") + "%";
-        return (root, query, builder) ->
-                builder.like(builder.lower(root.get("name")), pattern, '\\');
+    public List<Hashtag> apply(HashtagFilterDto filter) throws IOException {
+        return elasticRepository.findAllByKeyword(filter.keyword());
     }
 }

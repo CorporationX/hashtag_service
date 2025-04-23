@@ -1,7 +1,6 @@
 package school.faang.hashtagservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import school.faang.hashtagservice.model.Hashtag;
@@ -9,7 +8,7 @@ import school.faang.hashtagservice.model.Hashtag;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface HashtagRepository extends JpaRepository<Hashtag, Long>, JpaSpecificationExecutor<Hashtag> {
+public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
 
     boolean existsByName(String name);
 

@@ -2,7 +2,5 @@ databaseChangeLog:
   - include:
       file: db/changelog/changeset/hashtag_V001_initial.sql
   - include:
-      file: db/changelog/changeset/hashtag_V002_add_user_column.sql
-  - include:
-      file: db/changelog/changeset/hashtag_V003_insert_hashtag.sql
+      file: db/changelog/changeset/hashtag_V002_insert_hashtag.sql
 

@@ -53,9 +53,9 @@ spring:
         partitions: 3
         replicas: 1
 
-
   elasticsearch:
-    uris: http://localhost:9200
+    host: localhost
+    port: 9200
     username: elastic
     password: password
 
@@ -91,7 +91,7 @@ thread-pool:
     size: 1
     shutdown-timeout-seconds: 30
   cleaner-hashtag-pool:
-    size: 1
+    size: 2
     shutdown-timeout-seconds: 30
 
 cron:
