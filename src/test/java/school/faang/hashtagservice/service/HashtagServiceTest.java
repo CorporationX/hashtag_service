@@ -3,6 +3,7 @@ package school.faang.hashtagservice.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -121,17 +123,19 @@ public class HashtagServiceTest {
     @Test
     void testPositiveAddHashtags() throws IOException {
         UserDto user = createUserDto();
-        Hashtag hashtag = createHashtag(firstName);
+        ArgumentCaptor<Hashtag> hashtagCaptor = ArgumentCaptor.forClass(Hashtag.class);
         when(userContext.getUserId()).thenReturn(id);
         when(userClient.getUser(id)).thenReturn(user);
         when(hashtagRepository.existsByName(firstName)).thenReturn(false);
-        hashtag.setCreatedAt(null);
-        when(hashtagRepository.save(hashtag)).thenReturn(hashtag);
 
         hashtagService.addHashtags(dto);
 
-        verify(hashtagRepository, times(1)).save(hashtag);
-        verify(elasticRepository, times(1)).save(hashtag);
+        verify(hashtagRepository, times(1)).save(hashtagCaptor.capture());
+        verify(elasticRepository, times(1)).save(hashtagCaptor.capture());
+
+        Hashtag capturedHashtag = hashtagCaptor.getValue();
+        assertNotNull(capturedHashtag);
+        assertEquals(firstName, capturedHashtag.getName());
     }
 
     @Test
