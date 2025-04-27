@@ -18,6 +18,7 @@ import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.dto.HashtagResponseDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.dto.client.PostResponseDto;
+import school.faang.hashtagservice.dto.client.UserDto;
 import school.faang.hashtagservice.dto.event.HashtagAddingEvent;
 import school.faang.hashtagservice.dto.event.HashtagRemovingEvent;
 import school.faang.hashtagservice.dto.event.HashtagRequestEvent;
@@ -39,8 +40,10 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -105,7 +108,13 @@ public class HashtagService {
         for (HashtagFilter filter : filters) {
             if (filter.isApplicable(filterDto)) {
                 try {
-                    result = mergeResults(result, filter.apply(filterDto));
+                    List<Hashtag> filteredHashtags = filter.apply(filterDto);
+                    if (result.isEmpty()) {
+                        result.addAll(filteredHashtags);
+                    } else {
+                        Set<Hashtag> newHashtags = new HashSet<>(filteredHashtags);
+                        result.retainAll(newHashtags);
+                    }
                 } catch (IOException e) {
                     throw new ElasticsearchConnectionException(ELASTIC_ERROR_MESSAGE, e.getMessage());
                 }
@@ -126,7 +135,7 @@ public class HashtagService {
     public Map<Long, List<Long>> getHashtagsIdsByPostIds(List<Long> postIds) {
         return hashtagRepository.findAllByPostsWithHashtagIdIn(postIds).stream()
                 .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
-                        .map(post -> Pair.of(post.getId(), hashtag.getId())))
+                        .map(post -> Pair.of(post.getPostId(), hashtag.getId())))
                 .collect(Collectors.groupingBy(
                         Pair::getFirst,
                         Collectors.mapping(Pair::getSecond, Collectors.toList())));
@@ -150,7 +159,7 @@ public class HashtagService {
         List<Hashtag> hashtags = hashtagRepository.findAllByPostsWithHashtagId(postId);
         hashtags.stream()
                 .peek(hashtag -> {
-                    List<PostHashtag> posts = hashtag.getPostsWithHashtag();
+                    List<PostHashtag> posts = new ArrayList<>(hashtag.getPostsWithHashtag());
                     posts.removeIf(post -> post.getPostId().equals(postId));
                     hashtag.setPostsWithHashtag(posts);
                 })
@@ -179,7 +188,8 @@ public class HashtagService {
     @Async("unusedHashtagCleaner")
     public void clearUnusedHashtags() {
         LocalDateTime dateTime = LocalDateTime.now().minusDays(days);
-        List<Hashtag> hashtags = hashtagRepository.findAllByPostsWithHashtagEmptyAndCreatedAtBefore(dateTime);
+        List<Hashtag> hashtags = new ArrayList<>(
+                hashtagRepository.findAllByPostsWithHashtagEmptyAndCreatedAtBefore(dateTime));
 
         hashtags.removeIf(hashtag -> !hashtag.getPostsWithHashtag().isEmpty());
         hashtagRepository.deleteAll(hashtags);
@@ -213,13 +223,12 @@ public class HashtagService {
     private void checkUserExists() {
         try {
             Long userId = userContext.getUserId();
-            userClient.getUser(userId);
-        } catch (FeignException e) {
-            if (e.status() < 500) {
-                throw new UserNotFoundException("User with id %d not found", userContext.getUserId());
-            } else {
-                throw new UserServiceConnectionException("User server returned an error: " + e.getMessage());
+            UserDto user = userClient.getUser(userId);
+            if (user == null) {
+                throw new UserNotFoundException("User with id %d not found", userId);
             }
+        } catch (FeignException e) {
+            throw new UserServiceConnectionException("User server returned an error: " + e.getMessage());
         }
     }
 
@@ -229,13 +238,13 @@ public class HashtagService {
     )
     private List<PostResponseDto> getPostsOnPostClient(List<Long> postIds) {
         try {
-            return postClient.getPostsByIds(postIds);
-        } catch (FeignException e) {
-            if (e.status() == 404) {
+            List<PostResponseDto> postListDto = postClient.getPostsByIds(postIds);
+            if (postListDto.isEmpty()) {
                 throw new PostNotFoundException("Posts not found");
-            } else {
-                throw new PostServiceConnectionException("Post server returned an error: " + e.getMessage());
             }
+            return postListDto;
+        } catch (FeignException e) {
+            throw new PostServiceConnectionException("Post server returned an error: " + e.getMessage());
         }
     }
 
@@ -296,7 +305,7 @@ public class HashtagService {
         List<Hashtag> hashtagsOnDatabase = hashtagRepository.findAllByIdIn(missingIds);
         List<Hashtag> hashtags = new ArrayList<>(cachedHashtags);
         hashtags.addAll(hashtagsOnDatabase);
-        return publishEventOnRequestListener(hashtags);
+        return hashtags;
     }
 
     private List<Long> findPostIdsByHashtags(List<Hashtag> hashtags) {
@@ -309,14 +318,5 @@ public class HashtagService {
 
     private boolean isHashtagListsSizeEquals(List<Hashtag> cachedHashtags, List<Long> hashtagsIds) {
         return cachedHashtags.size() == hashtagsIds.size();
-    }
-
-    private List<Hashtag> mergeResults(List<Hashtag> existingResult, List<Hashtag> newResult) {
-        if (existingResult.isEmpty()) {
-            return newResult;
-        }
-        return existingResult.stream()
-                .filter(newResult::contains)
-                .toList();
     }
 }
