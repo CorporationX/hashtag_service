@@ -13,6 +13,7 @@ import school.faang.hashtagservice.client.UserServiceClient;
 import school.faang.hashtagservice.config.context.UserContext;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.dto.HashtagResponseDto;
+import school.faang.hashtagservice.dto.HashtagSmartDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.dto.client.PostResponseDto;
 import school.faang.hashtagservice.dto.client.UserDto;
@@ -20,21 +21,22 @@ import school.faang.hashtagservice.dto.event.HashtagAddingEvent;
 import school.faang.hashtagservice.dto.event.HashtagRemovingEvent;
 import school.faang.hashtagservice.dto.event.HashtagRequestEvent;
 import school.faang.hashtagservice.exception.UserNotFoundException;
-import school.faang.hashtagservice.filter.HashtagFilter;
 import school.faang.hashtagservice.mapper.HashtagMapper;
+import school.faang.hashtagservice.mapper.HashtagSmartDataMapper;
 import school.faang.hashtagservice.model.Hashtag;
 import school.faang.hashtagservice.model.PostHashtag;
 import school.faang.hashtagservice.publisher.HashtagRemovingEventPublisher;
 import school.faang.hashtagservice.publisher.HashtagRequestEventPublisher;
-import school.faang.hashtagservice.repository.ElasticsearchHashtagRepository;
+import school.faang.hashtagservice.repository.ElasticSearchHashtagRepository;
 import school.faang.hashtagservice.repository.HashtagRepository;
+import school.faang.hashtagservice.repository.PostHashtagRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,7 +72,10 @@ public class HashtagServiceTest {
     private HashtagRepository hashtagRepository;
 
     @Mock
-    private ElasticsearchHashtagRepository elasticRepository;
+    private PostHashtagRepository postHashtagRepository;
+
+    @Mock
+    private ElasticSearchHashtagRepository elasticRepository;
 
     @Mock
     private UserServiceClient userClient;
@@ -85,31 +90,22 @@ public class HashtagServiceTest {
     private HashtagMapper hashtagMapper;
 
     @Mock
-    private HashtagFilter fromDateFilter;
-
-    @Mock
-    private HashtagFilter toDateFilter;
-
-    @Mock
-    private HashtagFilter keywordFilter;
-
-    @Mock
     private HashtagRequestEventPublisher requestEventPublisher;
 
     @Mock
     private HashtagRemovingEventPublisher removingEventPublisher;
 
     @Mock
-    private HashtagCacheService cacheService;
+    private Executor unusedHashtagCleaner;
 
     @Mock
-    private Executor unusedHashtagCleaner;
+    private HashtagSmartDataMapper smartHashtagMapper;
 
     @BeforeEach
     void setUp() {
-        hashtagService = new HashtagService(hashtagRepository, elasticRepository, userClient, postClient, userContext,
-                hashtagMapper, List.of(fromDateFilter, toDateFilter, keywordFilter), requestEventPublisher,
-                removingEventPublisher, cacheService, unusedHashtagCleaner);
+        hashtagService = new HashtagService(hashtagRepository, postHashtagRepository, elasticRepository,
+                userClient, postClient, userContext, hashtagMapper, smartHashtagMapper, requestEventPublisher,
+                removingEventPublisher, unusedHashtagCleaner);
     }
 
     @Test
@@ -124,6 +120,7 @@ public class HashtagServiceTest {
     void testPositiveAddHashtags() throws IOException {
         UserDto user = createUserDto();
         ArgumentCaptor<Hashtag> hashtagCaptor = ArgumentCaptor.forClass(Hashtag.class);
+        ArgumentCaptor<HashtagSmartDto> hashtagSmartCaptor = ArgumentCaptor.forClass(HashtagSmartDto.class);
         when(userContext.getUserId()).thenReturn(id);
         when(userClient.getUser(id)).thenReturn(user);
         when(hashtagRepository.existsByName(firstName)).thenReturn(false);
@@ -131,7 +128,7 @@ public class HashtagServiceTest {
         hashtagService.addHashtags(dto);
 
         verify(hashtagRepository, times(1)).save(hashtagCaptor.capture());
-        verify(elasticRepository, times(1)).save(hashtagCaptor.capture());
+        verify(elasticRepository, times(1)).save(hashtagSmartCaptor.capture());
 
         Hashtag capturedHashtag = hashtagCaptor.getValue();
         assertNotNull(capturedHashtag);
@@ -140,8 +137,8 @@ public class HashtagServiceTest {
 
     @Test
     void testPositiveGetHashtagsByIds() {
-        when(cacheService.getPopularHashtags()).thenReturn(Collections.emptyList());
-        when(hashtagRepository.findAllByIdIn(ids)).thenReturn(hashtags);
+        when(hashtagRepository.findById(ids.get(0))).thenReturn(Optional.of(hashtags.get(0)));
+        when(hashtagRepository.findById(ids.get(1))).thenReturn(Optional.of(hashtags.get(1)));
         when(hashtagMapper.toDtoList(hashtags)).thenReturn(responses);
 
         List<HashtagResponseDto> result = hashtagService.getHashtagsByIds(ids);
@@ -151,14 +148,9 @@ public class HashtagServiceTest {
     }
 
     @Test
-    void testPositiveGetHashtagsByFilters() throws IOException {
+    void testPositiveGetHashtagsByFilters() {
         HashtagFilterDto filter = createFilter();
-        when(fromDateFilter.isApplicable(filter)).thenReturn(true);
-        when(toDateFilter.isApplicable(filter)).thenReturn(true);
-        when(keywordFilter.isApplicable(filter)).thenReturn(true);
-        when(toDateFilter.apply(filter)).thenReturn(hashtags);
-        when(fromDateFilter.apply(filter)).thenReturn(hashtags);
-        when(keywordFilter.apply(filter)).thenReturn(hashtags);
+        when(elasticRepository.findHashtagsByFilters(filter)).thenReturn(hashtags);
         when(hashtagMapper.toDtoList(hashtags)).thenReturn(responses);
 
         List<HashtagResponseDto> result = hashtagService.getHashtagsByFilters(filter);
@@ -168,7 +160,10 @@ public class HashtagServiceTest {
 
     @Test
     void testPositiveGetHashtagsIdsByPostId() {
-        when(hashtagRepository.findAllByPostsWithHashtagId(id)).thenReturn(hashtags);
+        List<PostHashtag> posts = List.of(
+                createPostHashtag(id, hashtags.get(0)), createPostHashtag(id, hashtags.get(1))
+        );
+        when(postHashtagRepository.findAllByPostId(id)).thenReturn(posts);
 
         List<Long> hashtagIds = hashtagService.getHashtagsIdsByPostId(id);
 
@@ -178,7 +173,11 @@ public class HashtagServiceTest {
     @Test
     void testPositiveGetHashtagsIdsByPostIds() {
         Map<Long, List<Long>> groupingHashtagsByPost = Map.of(ids.get(0), ids, ids.get(1), ids);
-        when(hashtagRepository.findAllByPostsWithHashtagIdIn(ids)).thenReturn(hashtagList);
+        List<PostHashtag> posts = List.of(
+                createPostHashtag(ids.get(0), hashtagList.get(0)), createPostHashtag(ids.get(1), hashtagList.get(0)),
+                createPostHashtag(ids.get(0), hashtagList.get(1)), createPostHashtag(ids.get(1), hashtagList.get(1))
+        );
+        when(postHashtagRepository.findAllByPostIdIn(ids)).thenReturn(posts);
 
         Map<Long, List<Long>> result = hashtagService.getHashtagsIdsByPostIds(ids);
 
@@ -188,31 +187,29 @@ public class HashtagServiceTest {
     @Test
     void testPositiveLinkHashtagOnPost() throws IOException {
         HashtagAddingEvent event = createAddingEvent(ids.get(0));
+        HashtagSmartDto smartHashtag = createSmartHashtag(hashtags.get(0));
         when(hashtagRepository.existsByName(firstName)).thenReturn(true);
         when(hashtagRepository.findByName(firstName)).thenReturn(hashtags.get(0));
+        when(smartHashtagMapper.toSmartDto(hashtags.get(0))).thenReturn(smartHashtag);
 
         hashtagService.linkHashtagOnPost(event);
 
         verify(hashtagRepository, times(1)).save(hashtags.get(0));
-        verify(elasticRepository, times(1)).save(hashtags.get(0));
+        verify(elasticRepository, times(1)).save(any(HashtagSmartDto.class));
     }
 
     @Test
-    void testPositiveUnlinkHashtagOnPost() throws IOException {
-        List<Hashtag> newHashtagList = new ArrayList<>(hashtagList.subList(0, 2));
-        when(hashtagRepository.findAllByPostsWithHashtagId(ids.get(0))).thenReturn(newHashtagList);
-
+    void testPositiveUnlinkHashtagOnPost() {
         hashtagService.unlinkHashtagOnPost(ids.get(0));
 
-        verify(hashtagRepository, times(2)).save(any(Hashtag.class));
-        verify(elasticRepository, times(2)).save(any(Hashtag.class));
+        verify(postHashtagRepository, times(1)).deleteByPostId(ids.get(0));
     }
 
     @Test
     void testPositiveGetPostsByHashtagIds() {
         List<PostResponseDto> responses = List.of(createPostResponse(ids), createPostResponse(ids));
-        when(cacheService.getPopularHashtags()).thenReturn(Collections.emptyList());
-        when(hashtagRepository.findAllByIdIn(ids)).thenReturn(hashtagList);
+        when(hashtagRepository.findById(ids.get(0))).thenReturn(Optional.of(hashtagList.get(0)));
+        when(hashtagRepository.findById(ids.get(1))).thenReturn(Optional.of(hashtagList.get(1)));
         when(postClient.getPostsByIds(ids)).thenReturn(responses);
 
         List<PostResponseDto> result = hashtagService.getPostsByHashtagIds(ids);
@@ -299,6 +296,25 @@ public class HashtagServiceTest {
     private PostResponseDto createPostResponse(List<Long> ids) {
         return PostResponseDto.builder()
                 .hashtagsId(ids)
+                .build();
+    }
+
+    private PostHashtag createPostHashtag(Long postId, Hashtag hashtag) {
+        return PostHashtag.builder()
+                .postId(postId)
+                .hashtag(hashtag)
+                .build();
+    }
+
+    private HashtagSmartDto createSmartHashtag(Hashtag hashtag) {
+        return HashtagSmartDto.builder()
+                .id(hashtag.getId())
+                .name(hashtag.getName())
+                .userId(hashtag.getUserId())
+                .createdAt(hashtag.getCreatedAt())
+                .postIds(hashtag.getPostsWithHashtag().stream()
+                        .map(PostHashtag::getId)
+                        .toList())
                 .build();
     }
 }

@@ -23,41 +23,39 @@ spring:
       host: localhost
       channels:
         base-channel: base-channel
-
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: hashtag-group
-      auto-offset-reset: earliest
-    producer:
-      acks: "1"
-    topics:
-      hashtag-adding:
-        name: "hashtag-adding-topic"
-        partitions: 3
-        replicas: 1
-      hashtag-removing:
-        name: "hashtag-removing-topic"
-        partitions: 3
-        replicas: 1
-      hashtag-analytics:
-        name: "hashtag-analytics"
-        partitions: 3
-        replicas: 1
-      hashtag-notification:
-        name: "hashtag-notification"
-        partitions: 3
-        replicas: 1
-      hashtag-achievement:
-        name: "hashtag-achievement"
-        partitions: 3
-        replicas: 1
+    kafka:
+      bootstrap-servers: localhost:9092
+      consumer:
+        group-id: hashtag-group
+        auto-offset-reset: earliest
+      producer:
+        acks: "1"
+      topics:
+        hashtag-adding:
+          name: "hashtag-adding-topic"
+          partitions: 3
+          replicas: 1
+        hashtag-removing:
+          name: "hashtag-removing-topic"
+          partitions: 3
+          replicas: 1
+        hashtag-analytics:
+          name: "hashtag-analytics"
+          partitions: 3
+          replicas: 1
+        hashtag-notification:
+          name: "hashtag-notification"
+          partitions: 3
+          replicas: 1
+        hashtag-achievement:
+          name: "hashtag-achievement"
+          partitions: 3
+          replicas: 1
 
   elasticsearch:
     host: localhost
     port: 9200
-    username: elastic
-    password: password
+    protocol: http
 
   profiles:
     active: local
@@ -102,8 +100,5 @@ cleaner-config:
   days: 7
 
 cache-config:
-  top-hashtags-minutes: 30
-  top-hashtags-key: "top_hashtags"
   top-hashtags-limit: 5000
-  hashtag-filters-minutes: 10
-  hashtag-filters-key: "hashtag_filters"
+  duration: 30

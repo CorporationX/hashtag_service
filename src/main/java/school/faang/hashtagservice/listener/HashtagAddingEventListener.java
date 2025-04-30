@@ -19,8 +19,8 @@ public class HashtagAddingEventListener {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
-            topics = "${spring.kafka.topics.hashtag-adding.name}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            topics = "${spring.data.kafka.topics.hashtag-adding.name}",
+            groupId = "${spring.data.kafka.consumer.group-id}"
     )
     public void receive(String message) {
         try {

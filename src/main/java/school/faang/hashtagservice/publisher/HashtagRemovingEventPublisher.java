@@ -18,7 +18,7 @@ public class HashtagRemovingEventPublisher {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${spring.kafka.topics.hashtag-notification.name}")
+    @Value("${spring.data.kafka.topics.hashtag-notification.name}")
     private String topic;
 
     public void publish(HashtagRemovingEvent event) {

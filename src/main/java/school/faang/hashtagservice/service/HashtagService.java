@@ -4,8 +4,8 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.util.Pair;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +16,7 @@ import school.faang.hashtagservice.client.UserServiceClient;
 import school.faang.hashtagservice.config.context.UserContext;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
 import school.faang.hashtagservice.dto.HashtagResponseDto;
+import school.faang.hashtagservice.dto.HashtagSmartDto;
 import school.faang.hashtagservice.dto.HashtagStringsDto;
 import school.faang.hashtagservice.dto.client.PostResponseDto;
 import school.faang.hashtagservice.dto.client.UserDto;
@@ -27,46 +28,48 @@ import school.faang.hashtagservice.exception.PostNotFoundException;
 import school.faang.hashtagservice.exception.PostServiceConnectionException;
 import school.faang.hashtagservice.exception.UserNotFoundException;
 import school.faang.hashtagservice.exception.UserServiceConnectionException;
-import school.faang.hashtagservice.filter.HashtagFilter;
 import school.faang.hashtagservice.mapper.HashtagMapper;
+import school.faang.hashtagservice.mapper.HashtagSmartDataMapper;
 import school.faang.hashtagservice.model.Hashtag;
 import school.faang.hashtagservice.model.PostHashtag;
 import school.faang.hashtagservice.publisher.HashtagRemovingEventPublisher;
 import school.faang.hashtagservice.publisher.HashtagRequestEventPublisher;
-import school.faang.hashtagservice.repository.ElasticsearchHashtagRepository;
+import school.faang.hashtagservice.repository.ElasticSearchHashtagRepository;
 import school.faang.hashtagservice.repository.HashtagRepository;
+import school.faang.hashtagservice.repository.PostHashtagRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
+import static school.faang.hashtagservice.constants.HashtagConstants.ELASTIC_ERROR_MESSAGE;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@CacheConfig(cacheNames = "hashtag")
 public class HashtagService {
 
     private static final int RETRY_DELAY = 500;
     private static final int RETRY_MULTIPLIER = 3;
-    private static final String ELASTIC_ERROR_MESSAGE = "Elastic search connection failed. %s";
 
     private final HashtagRepository hashtagRepository;
-    private final ElasticsearchHashtagRepository elasticRepository;
+    private final PostHashtagRepository postHashtagRepository;
+    private final ElasticSearchHashtagRepository elasticRepository;
     private final UserServiceClient userClient;
     private final PostServiceClient postClient;
     private final UserContext userContext;
     private final HashtagMapper hashtagMapper;
-    private final List<HashtagFilter> filters;
+    private final HashtagSmartDataMapper smartHashtagMapper;
     private final HashtagRequestEventPublisher hashtagRequestPublisher;
     private final HashtagRemovingEventPublisher hashtagRemovingPublisher;
-    private final HashtagCacheService cacheService;
     private final Executor unusedHashtagCleaner;
 
     @Value("${cleaner-config.days}")
@@ -76,50 +79,22 @@ public class HashtagService {
     public void addHashtags(HashtagStringsDto hashtagDto) {
         checkUserExists();
         hashtagDto.hashtagNames().stream()
-                .map(this::createHashtag)
+                .map(hashtag -> createHashtag(hashtag, userContext.getUserId()))
                 .filter(hashtag -> isHashtagNotExists(hashtag.getName()))
-                .forEach(hashtag -> {
-                    saveHashtag(hashtag);
-                    log.info("Hashtag {} added successfully", hashtag.getName());
-                });
+                .forEach(this::saveHashtag);
     }
 
     public List<HashtagResponseDto> getHashtagsByIds(List<Long> hashtagIds) {
-        List<Hashtag> cachedHashtags = findHashtagsOnCache(hashtagIds);
-
-        if (isHashtagListsSizeEquals(cachedHashtags, hashtagIds)) {
-            publishEventOnRequestListener(cachedHashtags);
-            return hashtagMapper.toDtoList(cachedHashtags);
-        }
-
-        List<Hashtag> hashtags = findMissingHashtags(hashtagIds, cachedHashtags);
+        List<Hashtag> hashtags = hashtagIds.stream()
+                .map(this::getHashtagById)
+                .filter(Objects::nonNull)
+                .toList();
 
         return hashtagMapper.toDtoList(publishEventOnRequestListener(hashtags));
     }
 
-    @Cacheable(
-            value = "${cache-config.hashtag-filters-key}",
-            key = "#filterDto.toString()",
-            unless = "#result == null || #result.isEmpty()"
-    )
     public List<HashtagResponseDto> getHashtagsByFilters(HashtagFilterDto filterDto) {
-        List<Hashtag> result = new ArrayList<>();
-
-        for (HashtagFilter filter : filters) {
-            if (filter.isApplicable(filterDto)) {
-                try {
-                    List<Hashtag> filteredHashtags = filter.apply(filterDto);
-                    if (result.isEmpty()) {
-                        result.addAll(filteredHashtags);
-                    } else {
-                        Set<Hashtag> newHashtags = new HashSet<>(filteredHashtags);
-                        result.retainAll(newHashtags);
-                    }
-                } catch (IOException e) {
-                    throw new ElasticsearchConnectionException(ELASTIC_ERROR_MESSAGE, e.getMessage());
-                }
-            }
-        }
+        List<Hashtag> result = elasticRepository.findHashtagsByFilters(filterDto);
 
         return hashtagMapper.toDtoList(result.stream()
                 .sorted(Comparator.comparing(Hashtag::getCreatedAt).reversed())
@@ -127,24 +102,22 @@ public class HashtagService {
     }
 
     public List<Long> getHashtagsIdsByPostId(Long postId) {
-        return hashtagRepository.findAllByPostsWithHashtagId(postId).stream()
-                .map(Hashtag::getId)
+        return postHashtagRepository.findAllByPostId(postId).stream()
+                .map(PostHashtag::getId)
                 .toList();
     }
 
     public Map<Long, List<Long>> getHashtagsIdsByPostIds(List<Long> postIds) {
-        return hashtagRepository.findAllByPostsWithHashtagIdIn(postIds).stream()
-                .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
-                        .map(post -> Pair.of(post.getPostId(), hashtag.getId())))
-                .collect(Collectors.groupingBy(
-                        Pair::getFirst,
-                        Collectors.mapping(Pair::getSecond, Collectors.toList())));
+        return postHashtagRepository.findAllByPostIdIn(postIds).stream()
+                .collect(Collectors.groupingBy(PostHashtag::getPostId,
+                        Collectors.mapping(sequence -> sequence.getHashtag().getId(), Collectors.toList())
+                ));
     }
 
     @Transactional
     public void linkHashtagOnPost(HashtagAddingEvent event) {
         if (isHashtagNotExists(event.hashtagName())) {
-            saveHashtag(createHashtag(event.hashtagName()));
+            saveHashtag(createHashtag(event.hashtagName(), event.authorId()));
         }
         Hashtag hashtag = hashtagRepository.findByName(event.hashtagName());
         List<PostHashtag> posts = hashtag.getPostsWithHashtag();
@@ -156,30 +129,15 @@ public class HashtagService {
 
     @Transactional
     public void unlinkHashtagOnPost(Long postId) {
-        List<Hashtag> hashtags = hashtagRepository.findAllByPostsWithHashtagId(postId);
-        hashtags.stream()
-                .peek(hashtag -> {
-                    List<PostHashtag> posts = new ArrayList<>(hashtag.getPostsWithHashtag());
-                    posts.removeIf(post -> post.getPostId().equals(postId));
-                    hashtag.setPostsWithHashtag(posts);
-                })
-                .forEach(hashtag -> {
-                    saveHashtag(hashtag);
-                    log.info("Hashtag {} unlink to post with id {}", hashtag.getName(), postId);
-                });
+        postHashtagRepository.deleteByPostId(postId);
+        log.info("All hashtags unlinked from post {}", postId);
     }
 
     public List<PostResponseDto> getPostsByHashtagIds(List<Long> hashtagIds) {
-        List<Hashtag> cachedHashtags = findHashtagsOnCache(hashtagIds);
-
-        if (isHashtagListsSizeEquals(cachedHashtags, hashtagIds)) {
-            publishEventOnRequestListener(cachedHashtags);
-            List<Long> postIds = findPostIdsByHashtags(cachedHashtags);
-
-            return getPostsOnPostClient(postIds);
-        }
-
-        List<Hashtag> hashtags = findMissingHashtags(hashtagIds, cachedHashtags);
+        List<Hashtag> hashtags = hashtagIds.stream()
+                .map(this::getHashtagById)
+                .filter(Objects::nonNull)
+                .toList();
 
         List<Long> postIds = findPostIdsByHashtags(hashtags);
         return getPostsOnPostClient(postIds);
@@ -191,7 +149,6 @@ public class HashtagService {
         List<Hashtag> hashtags = new ArrayList<>(
                 hashtagRepository.findAllByPostsWithHashtagEmptyAndCreatedAtBefore(dateTime));
 
-        hashtags.removeIf(hashtag -> !hashtag.getPostsWithHashtag().isEmpty());
         hashtagRepository.deleteAll(hashtags);
 
         List<CompletableFuture<Void>> futures = hashtags.stream()
@@ -208,12 +165,19 @@ public class HashtagService {
     public void saveHashtag(Hashtag hashtag) {
         hashtagRepository.save(hashtag);
         log.debug("Hashtag {} saved to Postgres", hashtag.getName());
+        HashtagSmartDto hashtagSmartDto = smartHashtagMapper.toSmartDto(hashtag);
         try {
-            elasticRepository.save(hashtag);
+            elasticRepository.save(hashtagSmartDto);
         } catch (IOException e) {
             throw new ElasticsearchConnectionException(ELASTIC_ERROR_MESSAGE, e.getMessage());
         }
         log.debug("Hashtag {} saved to Elasticsearch", hashtag.getName());
+        log.info("Hashtag {} added successfully", hashtag.getName());
+    }
+
+    @Cacheable(key = "#id", unless = "#result == null")
+    public Hashtag getHashtagById(Long id) {
+        return hashtagRepository.findById(id).orElse(null);
     }
 
     @Retryable(
@@ -261,11 +225,11 @@ public class HashtagService {
                 .toList();
     }
 
-    private Hashtag createHashtag(String name) {
+    private Hashtag createHashtag(String name, Long authorId) {
         return Hashtag.builder()
                 .name(name)
                 .postsWithHashtag(new ArrayList<>())
-                .userId(userContext.getUserId())
+                .userId(authorId)
                 .build();
     }
 
@@ -292,31 +256,11 @@ public class HashtagService {
                 .build();
     }
 
-    private List<Hashtag> findHashtagsOnCache(List<Long> hashtagIds) {
-        return cacheService.getPopularHashtags().stream()
-                .filter(hashtag -> hashtagIds.contains(hashtag.getId()))
-                .toList();
-    }
-
-    private List<Hashtag> findMissingHashtags(List<Long> hashtagIds, List<Hashtag> cachedHashtags) {
-        List<Long> missingIds = hashtagIds.stream()
-                .filter(id -> cachedHashtags.stream().noneMatch(hashtag -> hashtag.getId().equals(id)))
-                .toList();
-        List<Hashtag> hashtagsOnDatabase = hashtagRepository.findAllByIdIn(missingIds);
-        List<Hashtag> hashtags = new ArrayList<>(cachedHashtags);
-        hashtags.addAll(hashtagsOnDatabase);
-        return hashtags;
-    }
-
     private List<Long> findPostIdsByHashtags(List<Hashtag> hashtags) {
         return hashtags.stream()
                 .flatMap(hashtag -> hashtag.getPostsWithHashtag().stream()
                         .map(PostHashtag::getPostId))
                 .distinct()
                 .toList();
-    }
-
-    private boolean isHashtagListsSizeEquals(List<Hashtag> cachedHashtags, List<Long> hashtagsIds) {
-        return cachedHashtags.size() == hashtagsIds.size();
     }
 }

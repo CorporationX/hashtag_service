@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HashtagAchievementTopicProperties {
 
-    @Value("${spring.kafka.topics.hashtag-achievement.name}")
+    @Value("${spring.data.kafka.topics.hashtag-achievement.name}")
     private String name;
 
-    @Value("${spring.kafka.topics.hashtag-achievement.partitions}")
+    @Value("${spring.data.kafka.topics.hashtag-achievement.partitions}")
     private int partitions;
 
-    @Value("${spring.kafka.topics.hashtag-achievement.replicas}")
+    @Value("${spring.data.kafka.topics.hashtag-achievement.replicas}")
     private int replicas;
 }

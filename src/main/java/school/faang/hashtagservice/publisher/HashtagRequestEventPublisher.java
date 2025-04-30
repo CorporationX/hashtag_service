@@ -18,10 +18,10 @@ public class HashtagRequestEventPublisher {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${spring.kafka.topics.hashtag-analytics.name}")
+    @Value("${spring.data.kafka.topics.hashtag-analytics.name}")
     private String analyticsTopic;
 
-    @Value("${spring.kafka.topics.hashtag-achievement.name}")
+    @Value("${spring.data.kafka.topics.hashtag-achievement.name}")
     private String achievementTopic;
 
     public void publish(HashtagRequestEvent event) {

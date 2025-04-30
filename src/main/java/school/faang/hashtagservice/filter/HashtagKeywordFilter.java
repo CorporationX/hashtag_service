@@ -1,19 +1,13 @@
 package school.faang.hashtagservice.filter;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
-import school.faang.hashtagservice.model.Hashtag;
-import school.faang.hashtagservice.repository.ElasticsearchHashtagRepository;
-
-import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class HashtagKeywordFilter implements HashtagFilter {
-
-    private final ElasticsearchHashtagRepository elasticRepository;
 
     @Override
     public boolean isApplicable(HashtagFilterDto filter) {
@@ -21,7 +15,12 @@ public class HashtagKeywordFilter implements HashtagFilter {
     }
 
     @Override
-    public List<Hashtag> apply(HashtagFilterDto filter) throws IOException {
-        return elasticRepository.findAllByKeyword(filter.keyword());
+    public void apply(BoolQuery.Builder boolQuery, HashtagFilterDto filter) {
+        boolQuery.must(must -> must
+                .wildcard(wildcard -> wildcard
+                        .field("name")
+                        .value("*" + filter.keyword() + "*")
+                )
+        );
     }
 }

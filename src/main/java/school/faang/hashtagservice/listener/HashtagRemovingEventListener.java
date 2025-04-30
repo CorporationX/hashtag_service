@@ -18,8 +18,8 @@ public class HashtagRemovingEventListener {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(
-            topics = "${spring.kafka.topics.hashtag-removing.name}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            topics = "${spring.data.kafka.topics.hashtag-removing.name}",
+            groupId = "${spring.data.kafka.consumer.group-id}"
     )
     public void receive(String message) {
         try {

@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HashtagRemovingTopicProperties {
 
-    @Value("${spring.kafka.topics.hashtag-removing.name}")
+    @Value("${spring.data.kafka.topics.hashtag-removing.name}")
     private String name;
 
-    @Value("${spring.kafka.topics.hashtag-removing.partitions}")
+    @Value("${spring.data.kafka.topics.hashtag-removing.partitions}")
     private int partitions;
 
-    @Value("${spring.kafka.topics.hashtag-removing.replicas}")
+    @Value("${spring.data.kafka.topics.hashtag-removing.replicas}")
     private int replicas;
 }

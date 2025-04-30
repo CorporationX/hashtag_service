@@ -1,19 +1,19 @@
 package school.faang.hashtagservice.filter;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.json.JsonData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import school.faang.hashtagservice.dto.HashtagFilterDto;
-import school.faang.hashtagservice.model.Hashtag;
-import school.faang.hashtagservice.repository.ElasticsearchHashtagRepository;
 
-import java.io.IOException;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Component
 @RequiredArgsConstructor
 public class HashtagToDateFilter implements HashtagFilter {
 
-    private final ElasticsearchHashtagRepository elasticRepository;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
 
     @Override
     public boolean isApplicable(HashtagFilterDto filter) {
@@ -21,7 +21,16 @@ public class HashtagToDateFilter implements HashtagFilter {
     }
 
     @Override
-    public List<Hashtag> apply(HashtagFilterDto filter) throws IOException {
-        return elasticRepository.findAllByDateTo(filter.toDate());
+    public void apply(BoolQuery.Builder boolQuery, HashtagFilterDto filter) {
+        boolQuery.filter(builder -> builder
+                .range(range -> range
+                        .field("createdAt")
+                        .lte(JsonData.of(formatDate(filter.toDate())))
+                )
+        );
+    }
+
+    private String formatDate(LocalDateTime date) {
+        return date.format(FORMATTER);
     }
 }

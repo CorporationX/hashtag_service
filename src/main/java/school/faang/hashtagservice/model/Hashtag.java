@@ -1,5 +1,7 @@
 package school.faang.hashtagservice.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -29,6 +31,11 @@ import java.util.List;
 @Table(name = "hashtags", indexes = @Index(name = "idx_hashtags_name", columnList = "name"))
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.CLASS,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "@class"
+)
 public class Hashtag {
 
     @Id
@@ -38,6 +45,7 @@ public class Hashtag {
     @Column(name = "name", length = 100, nullable = false, unique = true)
     private String name;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")

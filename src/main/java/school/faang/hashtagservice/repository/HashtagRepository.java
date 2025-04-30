@@ -1,5 +1,6 @@
 package school.faang.hashtagservice.repository;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,15 +15,13 @@ public interface HashtagRepository extends JpaRepository<Hashtag, Long> {
 
     Hashtag findByName(String name);
 
-    List<Hashtag> findAllByIdIn(List<Long> hashtagIds);
+    @Query("SELECT h FROM Hashtag h WHERE SIZE(h.postsWithHashtag) = 0 AND h.createdAt < :dateTime")
+    List<Hashtag> findAllByPostsWithHashtagEmptyAndCreatedAtBefore(@Param("dateTime") LocalDateTime dateTime);
 
-    List<Hashtag> findAllByPostsWithHashtagId(Long postId);
+    @Query("SELECT h.id FROM Hashtag h LEFT JOIN h.postsWithHashtag p " +
+            "GROUP BY h.id ORDER BY COUNT(p) DESC, h.name ASC")
+    List<Long> findTopPopularHashtagIds(Pageable pageable);
 
-    List<Hashtag> findAllByPostsWithHashtagIdIn(List<Long> postIds);
-
-    List<Hashtag> findAllByPostsWithHashtagEmptyAndCreatedAtBefore(LocalDateTime dateTime);
-
-    @Query("SELECT h FROM Hashtag h LEFT JOIN h.postsWithHashtag p " +
-            "GROUP BY h.id ORDER BY COUNT(p) DESC, h.name ASC LIMIT :limit")
-    List<Hashtag> findTopPopularHashtags(@Param("limit") int limit);
+    @Query("SELECT DISTINCT h FROM Hashtag h LEFT JOIN FETCH h.postsWithHashtag WHERE h.id IN :ids")
+    List<Hashtag> findWithPostsByIds(@Param("ids") List<Long> ids);
 }

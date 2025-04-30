@@ -60,7 +60,6 @@ public class KafkaTopicsConfig {
         return TopicBuilder.name(name)
                 .partitions(partitions)
                 .replicas(replicas)
-                .compact()
                 .build();
     }
 }
