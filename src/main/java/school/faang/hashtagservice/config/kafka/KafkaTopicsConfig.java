@@ -23,37 +23,37 @@ public class KafkaTopicsConfig {
 
     @Bean
     public NewTopic hashtagAddingTopic() {
-        return createTopic(hashtagAddingTopic.getName(),
-                hashtagAddingTopic.getPartitions(),
-                hashtagAddingTopic.getReplicas());
+        return createTopic(hashtagAddingTopic.name(),
+                hashtagAddingTopic.partitions(),
+                hashtagAddingTopic.replicas());
     }
 
     @Bean
     public NewTopic hashtagRemovingTopic() {
-        return createTopic(hashtagRemovingTopic.getName(),
-                hashtagRemovingTopic.getPartitions(),
-                hashtagRemovingTopic.getReplicas());
+        return createTopic(hashtagRemovingTopic.name(),
+                hashtagRemovingTopic.partitions(),
+                hashtagRemovingTopic.replicas());
     }
 
     @Bean
     public NewTopic hashtagAnalyticsTopic() {
-        return createTopic(hashtagAnalyticsTopic.getName(),
-                hashtagAnalyticsTopic.getPartitions(),
-                hashtagAnalyticsTopic.getReplicas());
+        return createTopic(hashtagAnalyticsTopic.name(),
+                hashtagAnalyticsTopic.partitions(),
+                hashtagAnalyticsTopic.replicas());
     }
 
     @Bean
     public NewTopic hashtagNotificationTopic() {
-        return createTopic(hashtagNotificationTopic.getName(),
-                hashtagNotificationTopic.getPartitions(),
-                hashtagNotificationTopic.getReplicas());
+        return createTopic(hashtagNotificationTopic.name(),
+                hashtagNotificationTopic.partitions(),
+                hashtagNotificationTopic.replicas());
     }
 
     @Bean
     public NewTopic hashtagAchievementTopic() {
-        return createTopic(hashtagAchievementTopic.getName(),
-                hashtagAchievementTopic.getPartitions(),
-                hashtagAchievementTopic.getReplicas());
+        return createTopic(hashtagAchievementTopic.name(),
+                hashtagAchievementTopic.partitions(),
+                hashtagAchievementTopic.replicas());
     }
 
     private NewTopic createTopic(String name, int partitions, int replicas) {

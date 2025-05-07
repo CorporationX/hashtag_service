@@ -27,9 +27,9 @@ public class ElasticSearchConfig {
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {
-        String host = System.getenv().getOrDefault("ELASTICSEARCH_HOST", config.getHost());
+        String host = System.getenv().getOrDefault("ELASTICSEARCH_HOST", config.host());
         JsonpMapper mapper = new JacksonJsonpMapper(objectMapper);
-        RestClient restClient = RestClient.builder(new HttpHost(host, config.getPort(), config.getProtocol()))
+        RestClient restClient = RestClient.builder(new HttpHost(host, config.port(), config.protocol()))
                 .build();
         ElasticsearchTransport transport = new RestClientTransport(restClient, mapper);
 

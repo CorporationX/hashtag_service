@@ -65,6 +65,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.redis.testcontainers:testcontainers-redis-junit-jupiter:1.4.6")
     testImplementation("org.testcontainers:elasticsearch:1.17.6")
+    testImplementation("org.testcontainers:kafka:1.19.3")
 
     /**
      * Tests
@@ -73,6 +74,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation("org.awaitility:awaitility:4.2.0")
 }
 
 tasks.withType<Test> {

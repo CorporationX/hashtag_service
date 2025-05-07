@@ -1,6 +1,6 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/changeset/hashtag_V001_initial.sql
+      file: db/changelog/changeset/V001__initial.sql
   - include:
-      file: db/changelog/changeset/hashtag_V002_insert_hashtag.sql
+      file: db/changelog/changeset/V002__insert_hashtag.sql
 

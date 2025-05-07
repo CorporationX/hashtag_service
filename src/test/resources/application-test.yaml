@@ -1,0 +1,55 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: user
+    password: password
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      channels:
+        base-channel: base-channel
+    kafka:
+      bootstrap-servers: localhost:9094,localhost:9093
+      consumer:
+        group-id: hashtag-group
+        auto-offset-reset: earliest
+      producer:
+        acks: "1"
+      topics:
+        hashtag-adding:
+          name: "hashtag-adding-topic"
+          partitions: 3
+          replicas: 1
+        hashtag-removing:
+          name: "hashtag-removing-topic"
+          partitions: 3
+          replicas: 1
+        hashtag-analytics:
+          name: "hashtag-analytics"
+          partitions: 3
+          replicas: 1
+        hashtag-notification:
+          name: "hashtag-notification"
+          partitions: 3
+          replicas: 1
+        hashtag-achievement:
+          name: "hashtag-achievement"
+          partitions: 3
+          replicas: 1
+
+  elasticsearch:
+    host: localhost
+    port: 9200
+    protocol: http

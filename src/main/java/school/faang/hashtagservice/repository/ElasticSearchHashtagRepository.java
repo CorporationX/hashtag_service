@@ -47,8 +47,7 @@ public class ElasticSearchHashtagRepository {
 
             SearchResponse<Hashtag> response = elasticClient.search(search -> search
                             .index("hashtags")
-                            .query(query -> query.bool(boolQuery.build()))
-                    , Hashtag.class);
+                            .query(query -> query.bool(boolQuery.build())), Hashtag.class);
 
             return extractHashtags(response);
         } catch (IOException e) {

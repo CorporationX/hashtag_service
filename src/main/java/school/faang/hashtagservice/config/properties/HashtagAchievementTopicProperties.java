@@ -1,19 +1,11 @@
 package school.faang.hashtagservice.config.properties;
 
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@Getter
-@Configuration
-public class HashtagAchievementTopicProperties {
-
-    @Value("${spring.data.kafka.topics.hashtag-achievement.name}")
-    private String name;
-
-    @Value("${spring.data.kafka.topics.hashtag-achievement.partitions}")
-    private int partitions;
-
-    @Value("${spring.data.kafka.topics.hashtag-achievement.replicas}")
-    private int replicas;
+@ConfigurationProperties(prefix = "spring.data.kafka.topics.hashtag-achievement")
+public record HashtagAchievementTopicProperties(
+        String name,
+        int partitions,
+        int replicas
+) {
 }
