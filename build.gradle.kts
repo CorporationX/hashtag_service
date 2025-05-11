@@ -20,6 +20,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
@@ -34,7 +35,7 @@ dependencies {
      */
     implementation("org.liquibase:liquibase-core")
     implementation("redis.clients:jedis:4.3.2")
-    implementation("org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.10")
+    implementation("co.elastic.clients:elasticsearch-java:8.6.2")
     runtimeOnly("org.postgresql:postgresql")
 
     /**
@@ -64,6 +65,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.redis.testcontainers:testcontainers-redis-junit-jupiter:1.4.6")
     testImplementation("org.testcontainers:elasticsearch:1.17.6")
+    testImplementation("org.testcontainers:kafka:1.19.3")
 
     /**
      * Tests
@@ -71,7 +73,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    implementation("org.springframework.kafka:spring-kafka-test:3.0.6")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation("org.awaitility:awaitility:4.2.0")
 }
 
 tasks.withType<Test> {
@@ -107,6 +110,13 @@ tasks.jacocoTestReport {
 }
 
 tasks.jacocoTestCoverageVerification {
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it).apply {
+                include("school/faang/hashtagservice/service/**")
+            }
+        })
+    )
     violationRules {
         rule {
             enabled = false
